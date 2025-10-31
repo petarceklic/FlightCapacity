@@ -202,7 +202,10 @@ export default function Home() {
   }, []);
 
   const handleFlightCodeChange = (e) => {
-    const value = e.target.value.toUpperCase();
+    // Remove spaces, hyphens, and other common separators, then uppercase
+    const value = e.target.value
+      .replace(/[\s-_]/g, '')  // Remove spaces, hyphens, underscores
+      .toUpperCase();
     setFormData(prev => ({
       ...prev,
       flightCode: value
@@ -217,10 +220,16 @@ export default function Home() {
   };
 
   const parseFlightCode = (code) => {
+    // Clean the code: remove spaces, hyphens, underscores
+    const cleanCode = code.replace(/[\s-_]/g, '').toUpperCase();
+    
     // Match pattern: 2 letters followed by 1-4 digits
-    const match = code.match(/^([A-Z]{2})(\d{1,4})$/);
+    const match = cleanCode.match(/^([A-Z]{2})(\d{1,4})$/);
     if (!match) {
-      throw new Error('Invalid flight code format. Expected format: XX123 (2 letters + 1-4 digits)');
+      throw new Error(
+        `Invalid flight code format: "${code}". ` +
+        'Expected format: XX123 (e.g., LH400, BA1, UA 123)'
+      );
     }
     return {
       carrier: match[1],
@@ -371,14 +380,13 @@ export default function Home() {
               name="flightCode"
               value={formData.flightCode}
               onChange={handleFlightCodeChange}
-              placeholder="LH400"
-              pattern="[A-Z]{2}\d{1,4}"
-              title="Enter 2 letters followed by 1-4 digits (e.g., LH400)"
-              maxLength="6"
+              placeholder="LH400 or LH 400"
+              title="Enter flight code (e.g., LH400, BA 1, UA-123)"
+              maxLength="10"
               required
             />
             <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              Format: XX123 (e.g., LH400, BA1)
+              Accepts: LH400, LH 400, LH-400, etc.
             </small>
           </div>
 
@@ -426,6 +434,7 @@ export default function Home() {
             
             // Calculate capacity metrics from availability data
             const availabilityOffers = results.availability?.data || [];
+            const hasAvailabilityData = availabilityOffers && availabilityOffers.length > 0;
             
             // Group by cabin class
             const cabinData = {};
@@ -576,6 +585,37 @@ export default function Home() {
                     }} />
                   </div>
                 </div>
+
+                {/* Show message when no availability data */}
+                {!hasAvailabilityData && (
+                  <div style={{
+                    background: '#f9fafb',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    border: '1px solid #e5e7eb',
+                    textAlign: 'center',
+                    marginTop: '1rem',
+                    marginBottom: '1.5rem'
+                  }}>
+                    <div style={{
+                      fontWeight: '600',
+                      fontSize: '1rem',
+                      color: '#1f2937',
+                      marginBottom: '0.5rem'
+                    }}>
+                      Seat Data Not Shared by This Airline
+                    </div>
+                    <div style={{
+                      fontSize: '0.875rem',
+                      color: '#6b7280',
+                      lineHeight: '1.5'
+                    }}>
+                      This carrier doesn't currently share live seat availability with global aviation data networks such as Amadeus.
+                      <br />
+                      We're still able to display verified route, aircraft, and comfort details from trusted data partners.
+                    </div>
+                  </div>
+                )}
 
                 {/* CABIN CLASS BREAKDOWN TABLE */}
                 {Object.keys(cabinData).length > 0 && (
@@ -1006,7 +1046,7 @@ export default function Home() {
                               padding: '0.125rem 0.5rem',
                               borderRadius: '9999px',
                               backgroundColor: `${indicatorColor}15`
-                            }}>
+                       c     }}>
                               <span style={{
                                 width: '6px',
                                 height: '6px',
