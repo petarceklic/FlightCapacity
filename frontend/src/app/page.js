@@ -69,6 +69,20 @@ const seatReference = {
     "Boeing 777-300ER": { economyLegroom: "33–34 in" },
     "Airbus A350-900": { economyLegroom: "33–34 in" },
   },
+  "AirAsia": {
+    "Airbus A320": { economyLegroom: "29 in" },
+    "Airbus A320neo": { economyLegroom: "29 in" },
+    "Airbus A321": { economyLegroom: "29 in" },
+    "Airbus A321neo": { economyLegroom: "29 in" },
+    "Airbus A330-300": { economyLegroom: "32 in" },
+  },
+  "Air Asia": {
+    "Airbus A320": { economyLegroom: "29 in" },
+    "Airbus A320neo": { economyLegroom: "29 in" },
+    "Airbus A321": { economyLegroom: "29 in" },
+    "Airbus A321neo": { economyLegroom: "29 in" },
+    "Airbus A330-300": { economyLegroom: "32 in" },
+  },
 };
 
 // Helper function to get economy legroom
@@ -494,15 +508,16 @@ export default function Home() {
                 </div>
 
                 {/* CABIN CLASS BREAKDOWN TABLE */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>Cabin Class Breakdown</h3>
-                  <div style={{
-                    background: '#ffffff',
-                    borderRadius: '10px',
-                    border: '2px solid #e5e7eb',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    overflow: 'hidden'
-                  }}>
+                {Object.keys(cabinData).length > 0 && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>Cabin Class Breakdown</h3>
+                    <div style={{
+                      background: '#ffffff',
+                      borderRadius: '10px',
+                      border: '2px solid #e5e7eb',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      overflow: 'hidden'
+                    }}>
                     {/* Table Header */}
                     <div style={{
                       display: 'grid',
@@ -631,8 +646,9 @@ export default function Home() {
                         </>
                       );
                     })()}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* DELAY PREDICTION */}
                 {(() => {
