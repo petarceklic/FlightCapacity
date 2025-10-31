@@ -141,6 +141,204 @@ class AmadeusClient {
     }
   }
 
+  // Get airline information
+  async getAirlineInfo({ airlineCode }) {
+    const token = await this.getAccessToken();
+    
+    const params = new URLSearchParams({
+      airlineCodes: airlineCode
+    });
+
+    const url = `${this.baseUrl}/v1/reference-data/airlines?${params}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Airline info request failed: ${response.status} - ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting airline info:', error.message);
+      throw error;
+    }
+  }
+
+  // Get aircraft model information
+  async getAircraftModel({ aircraftCode }) {
+    const token = await this.getAccessToken();
+    
+    const params = new URLSearchParams({
+      aircraftCodes: aircraftCode
+    });
+
+    const url = `${this.baseUrl}/v1/reference-data/aircraft?${params}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Aircraft model request failed: ${response.status} - ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting aircraft model:', error.message);
+      throw error;
+    }
+  }
+
+  // Get seatmap for cabin breakdown
+  async getSeatmap({ flightOffers }) {
+    const token = await this.getAccessToken();
+    
+    const url = `${this.baseUrl}/v1/shopping/seatmaps`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: flightOffers })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Seatmap request failed: ${response.status} - ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting seatmap:', error.message);
+      throw error;
+    }
+  }
+
+  // Get delay prediction
+  async getDelayPrediction({ originLocationCode, destinationLocationCode, departureDate, departureTime, arrivalDate, arrivalTime, aircraftCode, carrierCode, flightNumber, duration }) {
+    const token = await this.getAccessToken();
+    
+    const url = `${this.baseUrl}/v1/travel/predictions/flight-delay`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          data: {
+            type: 'flight-delay",
+            originLocationCode,
+            destinationLocationCode,
+            departureDate,
+            departureTime,
+            arrivalDate,
+            arrivalTime,
+            aircraftCode,
+            carrierCode,
+            flightNumber,
+            duration
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Delay prediction request failed: ${response.status} - ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting delay prediction:', error.message);
+      throw error;
+    }
+  }
+
+  // Get fare trend (7-day view)
+  async getFareTrend({ origin, destination, departureDate, carrierCode }) {
+    const token = await this.getAccessToken();
+    
+    // Calculate date range (3 days before, 3 days after)
+    const centerDate = new Date(departureDate);
+    const dates = [];
+    
+    for (let i = -3; i <= 3; i++) {
+      const date = new Date(centerDate);
+      date.setDate(centerDate.getDate() + i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    
+    // Fetch prices for each date
+    const pricePromises = dates.map(async (date) => {
+      const params = new URLSearchParams({
+        originLocationCode: origin,
+        destinationLocationCode: destination,
+        departureDate: date,
+        adults: '1',
+        max: '1',
+        currencyCode: 'USD'
+      });
+
+      const url = `${this.baseUrl}/v2/shopping/flight-offers?${params}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          return { date, price: null };
+        }
+
+        const data = await response.json();
+        
+        // Filter for specific carrier if provided
+        let offers = data.data || [];
+        if (carrierCode) {
+          offers = offers.filter(offer => 
+            offer.itineraries?.[0]?.segments?.some(seg => seg.carrierCode === carrierCode)
+          );
+        }
+        
+        const cheapestPrice = offers.length > 0 ? parseFloat(offers[0].price?.total || 0) : null;
+        return { date, price: cheapestPrice };
+      } catch (error) {
+        return { date, price: null };
+      }
+    });
+
+    const results = await Promise.all(pricePromises);
+    return results;
+  }
+
   // Get flight status by carrier code, flight number, and date
   async getFlightStatus({ carrierCode, flightNumber, scheduledDepartureDate }) {
     const token = await this.getAccessToken();

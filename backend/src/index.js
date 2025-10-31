@@ -145,19 +145,49 @@ app.get('/api/flight-capacity', async (req, res) => {
 
     console.log(`Getting flight capacity: ${carrier}${number} from ${origin} to ${destination} on ${date}`);
 
-    // Get both schedule info and availability
-    const [scheduleData, availabilityData] = await Promise.all([
-      amadeus.getFlightStatus({
-        carrierCode: carrier.toUpperCase(),
-        flightNumber: number,
-        scheduledDepartureDate: date
-      }),
+    // Extract aircraft code from schedule for additional queries
+    const scheduleData = await amadeus.getFlightStatus({
+      carrierCode: carrier.toUpperCase(),
+      flightNumber: number,
+      scheduledDepartureDate: date
+    });
+    
+    const aircraftCode = scheduleData.data?.[0]?.legs?.[0]?.aircraftEquipment?.aircraftType;
+
+    // Fetch all enhanced data in parallel
+    const [
+      availabilityData,
+      airlineInfo,
+      aircraftModel,
+      fareTrend
+    ] = await Promise.all([
       amadeus.getFlightAvailability({
         origin: origin.toUpperCase(),
         destination: destination.toUpperCase(),
         departureDate: date,
         carrierCode: carrier.toUpperCase(),
         flightNumber: number
+      }),
+      amadeus.getAirlineInfo({
+        airlineCode: carrier.toUpperCase()
+      }).catch(err => {
+        console.warn('Airline info failed:', err.message);
+        return null;
+      }),
+      aircraftCode ? amadeus.getAircraftModel({
+        aircraftCode: aircraftCode
+      }).catch(err => {
+        console.warn('Aircraft model failed:', err.message);
+        return null;
+      }) : Promise.resolve(null),
+      amadeus.getFareTrend({
+        origin: origin.toUpperCase(),
+        destination: destination.toUpperCase(),
+        departureDate: date,
+        carrierCode: carrier.toUpperCase()
+      }).catch(err => {
+        console.warn('Fare trend failed:', err.message);
+        return null;
       })
     ]);
 
@@ -171,7 +201,10 @@ app.get('/api/flight-capacity', async (req, res) => {
         date
       },
       schedule: scheduleData,
-      availability: availabilityData
+      availability: availabilityData,
+      airline: airlineInfo,
+      aircraft: aircraftModel,
+      fareTrend: fareTrend
     });
 
   } catch (error) {
