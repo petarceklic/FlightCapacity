@@ -1046,7 +1046,7 @@ export default function Home() {
                               padding: '0.125rem 0.5rem',
                               borderRadius: '9999px',
                               backgroundColor: `${indicatorColor}15`
-                       c     }}>
+                            }}>
                               <span style={{
                                 width: '6px',
                                 height: '6px',
