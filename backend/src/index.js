@@ -179,7 +179,7 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 FlightCapacity API running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.AMADEUS_ENV || 'test'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
