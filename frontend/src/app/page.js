@@ -161,6 +161,18 @@ export default function Home() {
     });
   };
 
+  // Helper to format ISO 8601 duration (PT8H50M -> 8h 50m)
+  const formatDuration = (isoDuration) => {
+    if (!isoDuration) return 'N/A';
+    const match = isoDuration.match(/PT(\d+H)?(\d+M)?/);
+    if (!match) return isoDuration;
+    
+    const hours = match[1] ? match[1].replace('H', 'h ') : '';
+    const minutes = match[2] ? match[2].replace('M', 'm') : '';
+    
+    return (hours + minutes).trim() || 'N/A';
+  };
+
   return (
     <div className="container">
       <header className="header">
@@ -350,36 +362,142 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* CLASS BREAKDOWN */}
+                {/* CLASS BREAKDOWN WITH PROGRESS BARS */}
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Cabin Class Breakdown</h3>
-                  <div style={{ display: 'grid', gap: '0.75rem' }}>
-                    {Object.entries(cabinData).map(([cabin, data]) => (
-                      <div key={cabin} style={{
-                        padding: '1rem',
-                        background: '#f9fafb',
-                        borderRadius: '8px',
-                        border: '1px solid #e5e7eb',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <div>
-                          <div style={{ fontWeight: '600', color: '#111827' }}>{cabin}</div>
-                          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                            from ${data.minPrice.toFixed(2)}
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>Cabin Class Breakdown</h3>
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    {Object.entries(cabinData).map(([cabin, data]) => {
+                      // Estimate cabin capacity based on total aircraft capacity
+                      const cabinCapacityEstimate = {
+                        'ECONOMY': estimatedCapacity * 0.7,
+                        'PREMIUM_ECONOMY': estimatedCapacity * 0.15,
+                        'BUSINESS': estimatedCapacity * 0.12,
+                        'FIRST': estimatedCapacity * 0.03
+                      };
+                      const cabinTotal = cabinCapacityEstimate[cabin] || estimatedCapacity * 0.5;
+                      const cabinFillPct = Math.max(0, Math.min(100, ((cabinTotal - data.seats) / cabinTotal * 100)));
+                      
+                      return (
+                        <div key={cabin} style={{
+                          padding: '1.25rem',
+                          background: '#ffffff',
+                          borderRadius: '10px',
+                          border: '2px solid #e5e7eb',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                            <div>
+                              <div style={{ fontWeight: '600', color: '#111827', fontSize: '1rem' }}>
+                                {cabin.replace('_', ' ')}
+                              </div>
+                              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                                from ${data.minPrice.toFixed(2)}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#2563eb' }}>
+                                {data.seats}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>available</div>
+                            </div>
+                          </div>
+                          
+                          {/* Cabin fill progress bar */}
+                          <div style={{ marginTop: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                              <span>{cabinFillPct.toFixed(0)}% Full</span>
+                              <span>~{Math.round(cabinTotal)} seats</span>
+                            </div>
+                            <div style={{
+                              width: '100%',
+                              height: '8px',
+                              background: '#e5e7eb',
+                              borderRadius: '4px',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                width: `${cabinFillPct}%`,
+                                height: '100%',
+                                background: getCapacityColor(cabinFillPct),
+                                transition: 'width 0.5s ease'
+                              }} />
+                            </div>
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2563eb' }}>
-                            {data.seats}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>seats</div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
+
+                {/* 7-DAY FARE TREND */}
+                {results.fareTrend && results.fareTrend.length > 0 && (() => {
+                  const fareTrendData = results.fareTrend;
+                  const validPrices = fareTrendData.filter(d => d.price !== null).map(d => d.price);
+                  
+                  if (validPrices.length === 0) return null;
+                  
+                  const avgPrice = validPrices.reduce((a, b) => a + b, 0) / validPrices.length;
+                  const currentPrice = cabinData.ECONOMY?.minPrice || 0;
+                  const priceChange = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice * 100) : 0;
+                  const maxPrice = Math.max(...validPrices);
+                  
+                  return (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>7-Day Fare Trend</h3>
+                      <div style={{
+                        padding: '1.25rem',
+                        background: '#ffffff',
+                        borderRadius: '10px',
+                        border: '2px solid #e5e7eb',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                      }}>
+                        {/* Price change indicator */}
+                        <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                            Current vs 7-day average
+                          </div>
+                          <div style={{
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            color: priceChange > 0 ? '#dc2626' : '#10b981'
+                          }}>
+                            {priceChange > 0 ? '+' : ''}{priceChange.toFixed(1)}%
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                            {priceChange > 0 ? 'Above' : 'Below'} average (${avgPrice.toFixed(2)})
+                          </div>
+                        </div>
+                        
+                        {/* Simple bar chart */}
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', height: '100px' }}>
+                          {fareTrendData.map((item, idx) => {
+                            const barHeight = item.price ? (item.price / maxPrice * 100) : 0;
+                            const isToday = item.date === results.query.date;
+                            
+                            return (
+                              <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                <div style={{ fontSize: '0.65rem', color: '#6b7280', textAlign: 'center' }}>
+                                  {item.price ? `$${item.price.toFixed(0)}` : 'N/A'}
+                                </div>
+                                <div style={{
+                                  width: '100%',
+                                  height: `${barHeight}%`,
+                                  background: isToday ? '#2563eb' : '#93c5fd',
+                                  borderRadius: '4px 4px 0 0',
+                                  minHeight: item.price ? '10px' : '0',
+                                  transition: 'height 0.3s ease'
+                                }} />
+                                <div style={{ fontSize: '0.65rem', color: isToday ? '#2563eb' : '#6b7280', fontWeight: isToday ? 'bold' : 'normal' }}>
+                                  {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* FLIGHT ROUTE */}
                 <div className="flight-route">
@@ -422,7 +540,7 @@ export default function Home() {
                   {flight.legs?.[0]?.scheduledLegDuration && (
                     <div className="detail-item">
                       <span className="detail-label">Duration:</span>
-                      <span className="detail-value">{flight.legs[0].scheduledLegDuration}</span>
+                      <span className="detail-value">{formatDuration(flight.legs[0].scheduledLegDuration)}</span>
                     </div>
                   )}
                   {estimatedCapacity && (
