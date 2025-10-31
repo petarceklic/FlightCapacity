@@ -13,8 +13,6 @@ const getDefaultDate = () => {
 export default function Home() {
   const [formData, setFormData] = useState({
     flightCode: '',
-    origin: '',
-    destination: '',
     date: getDefaultDate(),
   });
   const [results, setResults] = useState(null);
@@ -39,22 +37,6 @@ export default function Home() {
     setFormData(prev => ({
       ...prev,
       date: e.target.value
-    }));
-  };
-
-  const handleOriginChange = (e) => {
-    const value = e.target.value.toUpperCase();
-    setFormData(prev => ({
-      ...prev,
-      origin: value
-    }));
-  };
-
-  const handleDestinationChange = (e) => {
-    const value = e.target.value.toUpperCase();
-    setFormData(prev => ({
-      ...prev,
-      destination: value
     }));
   };
 
@@ -210,44 +192,6 @@ export default function Home() {
             />
             <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
               Format: XX123 (e.g., LH400, BA1)
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="origin">Origin</label>
-            <input
-              type="text"
-              id="origin"
-              name="origin"
-              value={formData.origin}
-              onChange={handleOriginChange}
-              placeholder="FRA"
-              pattern="[A-Z]{3}"
-              title="Enter 3-letter airport code (e.g., FRA)"
-              maxLength="3"
-              required
-            />
-            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              Airport code (e.g., FRA, JFK)
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="destination">Destination</label>
-            <input
-              type="text"
-              id="destination"
-              name="destination"
-              value={formData.destination}
-              onChange={handleDestinationChange}
-              placeholder="JFK"
-              pattern="[A-Z]{3}"
-              title="Enter 3-letter airport code (e.g., JFK)"
-              maxLength="3"
-              required
-            />
-            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              Airport code (e.g., JFK, LHR)
             </small>
           </div>
 
