@@ -570,12 +570,6 @@ export default function Home() {
 
                 {/* FLIGHT DETAILS */}
                 <div className="flight-details">
-                  {aircraftType && (
-                    <div className="detail-item">
-                      <span className="detail-label">Aircraft:</span>
-                      <span className="detail-value">{aircraftType}</span>
-                    </div>
-                  )}
                   {flight.legs?.[0]?.scheduledLegDuration && (
                     <div className="detail-item">
                       <span className="detail-label">Duration:</span>
