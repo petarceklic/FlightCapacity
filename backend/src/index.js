@@ -1,3 +1,7 @@
+// Uses Railway environment variables:
+// AMADEUS_API_KEY, AMADEUS_API_SECRET, AMADEUS_BASE_URL
+// Automatically switches between test and production on deploy
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';

@@ -1,14 +1,36 @@
+// Uses Railway environment variables:
+// AMADEUS_API_KEY, AMADEUS_API_SECRET, AMADEUS_BASE_URL
+// Automatically switches between test and production on deploy
+
 import fetch from 'node-fetch';
 
 class AmadeusClient {
   constructor() {
-    this.clientId = process.env.AMADEUS_CLIENT_ID;
-    this.clientSecret = process.env.AMADEUS_CLIENT_SECRET;
-    this.env = process.env.AMADEUS_ENV || 'test';
+    // Read from Railway environment variables
+    this.clientId = process.env.AMADEUS_API_KEY;
+    this.clientSecret = process.env.AMADEUS_API_SECRET;
+    this.baseUrl = process.env.AMADEUS_BASE_URL;
+    this.env = process.env.NODE_ENV || 'test';
     
-    this.baseUrl = this.env === 'production' 
-      ? 'https://api.amadeus.com'
-      : 'https://test.api.amadeus.com';
+    // ⚠️ STRICT VALIDATION: Prevent deployment with missing or invalid credentials
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('❌ Missing required environment variables: AMADEUS_API_KEY and AMADEUS_API_SECRET');
+    }
+    
+    // ⚠️ STRICT VALIDATION: Ensure AMADEUS_BASE_URL is set and valid
+    if (!this.baseUrl || !this.baseUrl.includes('amadeus.com')) {
+      throw new Error('❌ AMADEUS_BASE_URL is missing or invalid. Check Railway environment settings.');
+    }
+    
+    // ✅ Startup confirmation
+    console.log(`✅ Using Amadeus base: ${this.baseUrl}`);
+    
+    // Additional logging in test mode
+    if (this.env === 'test') {
+      console.log('🔧 Amadeus Client Configuration:');
+      console.log('   API Key:', this.clientId ? `${this.clientId.substring(0, 8)}...` : 'NOT SET');
+      console.log('   Environment:', this.env);
+    }
     
     this.accessToken = null;
     this.tokenExpiry = null;
