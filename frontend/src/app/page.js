@@ -285,14 +285,31 @@ export default function Home() {
               return '#3b82f6'; // Blue - lots of space
             };
             
+            // Get airline and aircraft info from API response
+            const airlineName = results.airline?.data?.[0]?.businessName || results.airline?.data?.[0]?.commonName || results.query.carrier;
+            const airlineLogo = `https://content.airhex.com/content/logos/airlines_${results.query.carrier}_200_200_s.png`;
+            const aircraftName = results.aircraft?.data?.[0]?.name || aircraftType;
+            
             return (
               <div key={scheduleIndex} className="flight-card">
-                <div className="flight-card-header">
+                {/* AIRLINE HEADER WITH LOGO */}
+                <div className="flight-card-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <img 
+                    src={airlineLogo} 
+                    alt={airlineName}
+                    style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: 'white', padding: '0.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
                   <div>
-                    <h2>{results.query.flightCode}</h2>
-                    <p className="airline-name">
-                      {results.query.route}
+                    <h2 style={{ margin: 0, fontSize: '1.75rem' }}>{results.query.flightCode}</h2>
+                    <p className="airline-name" style={{ margin: '0.25rem 0 0 0', color: '#6b7280' }}>
+                      {airlineName} • {results.query.route}
                     </p>
+                    {aircraftName && aircraftName !== aircraftType && (
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#9ca3af' }}>
+                        ✈️ {aircraftName}
+                      </p>
+                    )}
                   </div>
                 </div>
 
