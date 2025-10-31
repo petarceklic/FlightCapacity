@@ -442,7 +442,6 @@ export default function Home() {
             
             availabilityOffers.forEach(offer => {
               const seats = offer.numberOfBookableSeats || 0;
-              totalSeatsAvailable += seats;
               
               offer.travelerPricings?.forEach(pricing => {
                 pricing.fareDetailsBySegment?.forEach(segment => {
@@ -454,7 +453,9 @@ export default function Home() {
                       offers: 0
                     };
                   }
-                  cabinData[cabin].seats += seats;
+                  // Use the maximum seats available for this cabin (not sum)
+                  // Multiple offers represent different fare classes for the same inventory
+                  cabinData[cabin].seats = Math.max(cabinData[cabin].seats, seats);
                   cabinData[cabin].offers += 1;
                   const price = parseFloat(offer.price?.total || 0);
                   if (price < cabinData[cabin].minPrice) {
@@ -463,6 +464,9 @@ export default function Home() {
                 });
               });
             });
+            
+            // Calculate total seats from cabin maximums
+            totalSeatsAvailable = Object.values(cabinData).reduce((sum, cabin) => sum + cabin.seats, 0);
             
             // Estimate total capacity (rough estimate based on aircraft type)
             const aircraftCapacity = {
