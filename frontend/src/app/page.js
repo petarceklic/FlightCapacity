@@ -469,7 +469,33 @@ export default function Home() {
                 </div>
 
                 {/* DELAY PREDICTION */}
-                {results.delayPrediction && results.delayPrediction.data && results.delayPrediction.data.length > 0 && (() => {
+                {(() => {
+                  // Check if delay prediction data is available
+                  if (!results.delayPrediction || !results.delayPrediction.data || results.delayPrediction.data.length === 0) {
+                    // Show placeholder when API doesn't return data
+                    return (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>On-Time Performance</h3>
+                        <div style={{
+                          padding: '1.25rem',
+                          background: '#f9fafb',
+                          borderRadius: '10px',
+                          border: '2px dashed #e5e7eb',
+                          textAlign: 'center',
+                          color: '#6b7280'
+                        }}>
+                          <div style={{ fontSize: '0.875rem' }}>
+                            ℹ️ Delay prediction not available for this flight
+                          </div>
+                          <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.8 }}>
+                            This feature may require a production API plan
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Show actual prediction if available
                   const prediction = results.delayPrediction.data[0];
                   const delayProbability = prediction.probability || 0;
                   const delayPercentage = (delayProbability * 100).toFixed(0);
@@ -537,11 +563,53 @@ export default function Home() {
                 })()}
 
                 {/* 7-DAY FARE TREND */}
-                {results.fareTrend && results.fareTrend.length > 0 && (() => {
+                {(() => {
+                  if (!results.fareTrend || results.fareTrend.length === 0) {
+                    // Show placeholder when fare trend is not available
+                    return (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>7-Day Fare Trend</h3>
+                        <div style={{
+                          padding: '1.25rem',
+                          background: '#f9fafb',
+                          borderRadius: '10px',
+                          border: '2px dashed #e5e7eb',
+                          textAlign: 'center',
+                          color: '#6b7280'
+                        }}>
+                          <div style={{ fontSize: '0.875rem' }}>
+                            📊 Fare trend data not available
+                          </div>
+                          <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.8 }}>
+                            Historical pricing data may take time to load
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
                   const fareTrendData = results.fareTrend;
                   const validPrices = fareTrendData.filter(d => d.price !== null).map(d => d.price);
                   
-                  if (validPrices.length === 0) return null;
+                  if (validPrices.length === 0) {
+                    return (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>7-Day Fare Trend</h3>
+                        <div style={{
+                          padding: '1.25rem',
+                          background: '#f9fafb',
+                          borderRadius: '10px',
+                          border: '2px dashed #e5e7eb',
+                          textAlign: 'center',
+                          color: '#6b7280'
+                        }}>
+                          <div style={{ fontSize: '0.875rem' }}>
+                            📊 No valid pricing data for the selected dates
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   
                   const avgPrice = validPrices.reduce((a, b) => a + b, 0) / validPrices.length;
                   const currentPrice = cabinData.ECONOMY?.minPrice || 0;
