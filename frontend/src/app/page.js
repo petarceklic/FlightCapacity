@@ -74,7 +74,20 @@ const seatReference = {
 // Helper function to get economy legroom
 const getEconomyLegroom = (airlineName, aircraftModel) => {
   if (!airlineName || !aircraftModel) return null;
-  const airline = seatReference[airlineName];
+  
+  // Try exact match first
+  let airline = seatReference[airlineName];
+  
+  // If not found, try case-insensitive match
+  if (!airline) {
+    const airlineKey = Object.keys(seatReference).find(
+      key => key.toLowerCase() === airlineName.toLowerCase()
+    );
+    if (airlineKey) {
+      airline = seatReference[airlineKey];
+    }
+  }
+  
   if (!airline) return null;
   const aircraft = airline[aircraftModel];
   if (!aircraft) return null;
