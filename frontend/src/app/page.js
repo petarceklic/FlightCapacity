@@ -2,10 +2,18 @@
 
 import { useState, useEffect } from 'react';
 
+// Helper function to get default date (10 days from today)
+const getDefaultDate = () => {
+  const today = new Date();
+  const futureDate = new Date(today);
+  futureDate.setDate(today.getDate() + 10);
+  return futureDate.toISOString().split('T')[0];
+};
+
 export default function Home() {
   const [formData, setFormData] = useState({
     flightCode: '',
-    date: '',
+    date: getDefaultDate(),
   });
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
