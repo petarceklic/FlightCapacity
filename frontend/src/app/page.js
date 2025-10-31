@@ -493,70 +493,144 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* CLASS BREAKDOWN WITH PROGRESS BARS */}
+                {/* CABIN CLASS BREAKDOWN TABLE */}
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>Cabin Class Breakdown</h3>
-                  <div style={{ display: 'grid', gap: '1rem' }}>
-                    {Object.entries(cabinData).map(([cabin, data]) => {
-                      // Estimate cabin capacity based on total aircraft capacity
+                  <div style={{
+                    background: '#ffffff',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Table Header */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 1.5fr 1.5fr 3fr',
+                      gap: '1rem',
+                      padding: '0.75rem 1rem',
+                      background: '#f9fafb',
+                      borderBottom: '1px solid #e5e7eb',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      <div>Cabin</div>
+                      <div style={{ textAlign: 'center' }}>Seats Available</div>
+                      <div style={{ textAlign: 'center' }}>Cabin Capacity</div>
+                      <div>Fill Level</div>
+                    </div>
+                    
+                    {/* Table Rows */}
+                    {(() => {
                       const cabinCapacityEstimate = {
                         'ECONOMY': estimatedCapacity * 0.7,
                         'PREMIUM_ECONOMY': estimatedCapacity * 0.15,
                         'BUSINESS': estimatedCapacity * 0.12,
                         'FIRST': estimatedCapacity * 0.03
                       };
-                      const cabinTotal = cabinCapacityEstimate[cabin] || estimatedCapacity * 0.5;
-                      const cabinFillPct = Math.max(0, Math.min(100, ((cabinTotal - data.seats) / cabinTotal * 100)));
+                      
+                      let totalCapacity = 0;
+                      let totalAvailable = 0;
                       
                       return (
-                        <div key={cabin} style={{
-                          padding: '1.25rem',
-                          background: '#ffffff',
-                          borderRadius: '10px',
-                          border: '2px solid #e5e7eb',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                            <div>
-                              <div style={{ fontWeight: '600', color: '#111827', fontSize: '1rem' }}>
-                                {cabin.replace('_', ' ')}
+                        <>
+                          {Object.entries(cabinData).map(([cabin, data]) => {
+                            const cabinTotal = Math.round(cabinCapacityEstimate[cabin] || estimatedCapacity * 0.5);
+                            const cabinFillPct = Math.max(0, Math.min(100, ((cabinTotal - data.seats) / cabinTotal * 100)));
+                            
+                            totalCapacity += cabinTotal;
+                            totalAvailable += data.seats;
+                            
+                            return (
+                              <div key={cabin} style={{
+                                display: 'grid',
+                                gridTemplateColumns: '2fr 1.5fr 1.5fr 3fr',
+                                gap: '1rem',
+                                padding: '1rem',
+                                borderBottom: '1px solid #f3f4f6',
+                                alignItems: 'center'
+                              }}>
+                                <div style={{ fontWeight: '600', color: '#111827' }}>
+                                  {cabin.replace('_', ' ')}
+                                </div>
+                                <div style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold', color: '#2563eb' }}>
+                                  {data.seats}
+                                </div>
+                                <div style={{ textAlign: 'center', color: '#6b7280' }}>
+                                  {cabinTotal}
+                                </div>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div style={{
+                                      flex: 1,
+                                      height: '20px',
+                                      background: '#e5e7eb',
+                                      borderRadius: '4px',
+                                      overflow: 'hidden',
+                                      position: 'relative'
+                                    }}>
+                                      <div style={{
+                                        width: `${cabinFillPct}%`,
+                                        height: '100%',
+                                        background: getCapacityColor(cabinFillPct),
+                                        transition: 'width 0.5s ease'
+                                      }} />
+                                    </div>
+                                    <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', minWidth: '45px' }}>
+                                      {cabinFillPct.toFixed(0)}%
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                                from ${data.minPrice.toFixed(2)}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#2563eb' }}>
-                                {data.seats}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>available</div>
-                            </div>
-                          </div>
+                            );
+                          })}
                           
-                          {/* Cabin fill progress bar */}
-                          <div style={{ marginTop: '0.75rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-                              <span>{cabinFillPct.toFixed(0)}% Full</span>
-                              <span>~{Math.round(cabinTotal)} seats</span>
+                          {/* Total Summary Row */}
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '2fr 1.5fr 1.5fr 3fr',
+                            gap: '1rem',
+                            padding: '1rem',
+                            background: '#f9fafb',
+                            fontWeight: '600',
+                            color: '#111827',
+                            alignItems: 'center'
+                          }}>
+                            <div>TOTAL</div>
+                            <div style={{ textAlign: 'center', fontSize: '1.25rem', color: '#2563eb' }}>
+                              {totalAvailable}
                             </div>
-                            <div style={{
-                              width: '100%',
-                              height: '8px',
-                              background: '#e5e7eb',
-                              borderRadius: '4px',
-                              overflow: 'hidden'
-                            }}>
-                              <div style={{
-                                width: `${cabinFillPct}%`,
-                                height: '100%',
-                                background: getCapacityColor(cabinFillPct),
-                                transition: 'width 0.5s ease'
-                              }} />
+                            <div style={{ textAlign: 'center' }}>
+                              {totalCapacity}
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{
+                                  flex: 1,
+                                  height: '20px',
+                                  background: '#e5e7eb',
+                                  borderRadius: '4px',
+                                  overflow: 'hidden'
+                                }}>
+                                  <div style={{
+                                    width: `${((totalCapacity - totalAvailable) / totalCapacity * 100)}%`,
+                                    height: '100%',
+                                    background: getCapacityColor((totalCapacity - totalAvailable) / totalCapacity * 100),
+                                    transition: 'width 0.5s ease'
+                                  }} />
+                                </div>
+                                <div style={{ fontSize: '0.875rem', minWidth: '45px' }}>
+                                  {((totalCapacity - totalAvailable) / totalCapacity * 100).toFixed(0)}%
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </>
                       );
-                    })}
+                    })()}
                   </div>
                 </div>
 
