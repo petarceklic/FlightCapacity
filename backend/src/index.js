@@ -97,6 +97,61 @@ app.get('/api/flights', async (req, res) => {
   }
 });
 
+// Flight capacity endpoint - shows availability and seats
+app.get('/api/flight-capacity', async (req, res) => {
+  try {
+    const { carrier, number, date, origin, destination } = req.query;
+
+    // Validate required parameters
+    if (!carrier || !number || !date || !origin || !destination) {
+      return res.status(400).json({
+        error: 'Missing required parameters',
+        required: ['carrier', 'number', 'date', 'origin', 'destination'],
+        example: '/api/flight-capacity?carrier=LH&number=400&date=2025-11-10&origin=FRA&destination=JFK'
+      });
+    }
+
+    console.log(`Getting flight capacity: ${carrier}${number} from ${origin} to ${destination} on ${date}`);
+
+    // Get both schedule info and availability
+    const [scheduleData, availabilityData] = await Promise.all([
+      amadeus.getFlightStatus({
+        carrierCode: carrier.toUpperCase(),
+        flightNumber: number,
+        scheduledDepartureDate: date
+      }),
+      amadeus.getFlightAvailability({
+        origin: origin.toUpperCase(),
+        destination: destination.toUpperCase(),
+        departureDate: date,
+        carrierCode: carrier.toUpperCase(),
+        flightNumber: number
+      })
+    ]);
+
+    res.json({
+      success: true,
+      query: {
+        carrier: carrier.toUpperCase(),
+        number: number,
+        flightCode: `${carrier.toUpperCase()}${number}`,
+        route: `${origin.toUpperCase()}-${destination.toUpperCase()}`,
+        date
+      },
+      schedule: scheduleData,
+      availability: availabilityData
+    });
+
+  } catch (error) {
+    console.error('Flight capacity error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch flight capacity',
+      message: error.message
+    });
+  }
+});
+
 // Flight status endpoint
 app.get('/api/flight-status', async (req, res) => {
   try {
@@ -176,7 +231,8 @@ app.use((req, res) => {
     availableEndpoints: [
       'GET /health',
       'GET /api/flights?origin=XXX&destination=YYY&date=YYYY-MM-DD',
-      'GET /api/flight-status?carrier=XX&number=123&date=YYYY-MM-DD'
+      'GET /api/flight-status?carrier=XX&number=123&date=YYYY-MM-DD',
+      'GET /api/flight-capacity?carrier=XX&number=123&date=YYYY-MM-DD&origin=XXX&destination=YYY'
     ]
   });
 });

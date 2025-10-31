@@ -87,6 +87,60 @@ class AmadeusClient {
     }
   }
 
+  // Get flight availability with capacity info (seats available)
+  async getFlightAvailability({ origin, destination, departureDate, carrierCode, flightNumber }) {
+    const token = await this.getAccessToken();
+    
+    const params = new URLSearchParams({
+      originLocationCode: origin,
+      destinationLocationCode: destination,
+      departureDate: departureDate,
+      adults: '1',
+      max: '250',
+      currencyCode: 'USD',
+      nonStop: 'false'
+    });
+
+    const url = `${this.baseUrl}/v2/shopping/flight-offers?${params}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Flight availability request failed: ${response.status} - ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      
+      // Filter for specific flight if carrier and number provided
+      if (carrierCode && flightNumber) {
+        const filteredOffers = data.data?.filter(offer => {
+          return offer.itineraries?.[0]?.segments?.some(segment => 
+            segment.carrierCode === carrierCode && 
+            segment.number === flightNumber
+          );
+        });
+        
+        return {
+          ...data,
+          data: filteredOffers || []
+        };
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error getting flight availability:', error.message);
+      throw error;
+    }
+  }
+
   // Get flight status by carrier code, flight number, and date
   async getFlightStatus({ carrierCode, flightNumber, scheduledDepartureDate }) {
     const token = await this.getAccessToken();
