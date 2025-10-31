@@ -1,4 +1,5 @@
 'use client';
+// Updated: 2025-10-31 - Improved UX for carriers without availability data
 
 import { useState, useEffect } from 'react';
 
