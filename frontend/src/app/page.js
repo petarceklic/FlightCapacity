@@ -809,7 +809,58 @@ export default function Home() {
                       <span className="detail-label">Est. Capacity:</span>
                       <span className="detail-value">{estimatedCapacity} seats</span>
                     </div>
-                  )}
+                  )}                  {(() => {
+                    console.log('🪑 Legroom lookup:', { airlineName, aircraftName });
+                    const legroom = getEconomyLegroom(airlineName, aircraftName);
+                    console.log('🪑 Legroom result:', legroom);
+                    
+                    if (legroom) {
+                      const minLegroom = parseInt(legroom.match(/\d+/)?.[0] || '0');
+                      let indicatorColor, indicatorLabel;
+                      if (minLegroom >= 33) {
+                        indicatorColor = '#10b981';
+                        indicatorLabel = 'Excellent';
+                      } else if (minLegroom >= 31) {
+                        indicatorColor = '#10b981';
+                        indicatorLabel = 'Good';
+                      } else if (minLegroom >= 30) {
+                        indicatorColor = '#f59e0b';
+                        indicatorLabel = 'Average';
+                      } else {
+                        indicatorColor = '#dc2626';
+                        indicatorLabel = 'Tight';
+                      }
+                      
+                      return (
+                        <div className="detail-item">
+                          <span className="detail-label">Economy legroom:</span>
+                          <span className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {legroom}
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              color: indicatorColor,
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '9999px',
+                              backgroundColor: `${indicatorColor}15`
+                            }}>
+                              <span style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                backgroundColor: indicatorColor
+                              }} />
+                              {indicatorLabel}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             );
