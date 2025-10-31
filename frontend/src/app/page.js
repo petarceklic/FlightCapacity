@@ -549,15 +549,16 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* CAPACITY OVERVIEW */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  padding: '2rem',
-                  borderRadius: '12px',
-                  color: 'white',
-                  marginBottom: '1.5rem',
-                  textAlign: 'center'
-                }}>
+                {/* CAPACITY OVERVIEW - Only show when availability data exists */}
+                {hasAvailabilityData ? (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    padding: '2rem',
+                    borderRadius: '12px',
+                    color: 'white',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
+                  }}>
                   <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                     {capacityPercentage.toFixed(0)}%
                   </div>
@@ -583,11 +584,10 @@ export default function Home() {
                       background: getCapacityColor(capacityPercentage),
                       transition: 'width 0.5s ease'
                     }} />
+                    </div>
                   </div>
-                </div>
-
-                {/* Show message when no availability data */}
-                {!hasAvailabilityData && (
+                ) : (
+                  // Show message when no availability data
                   <div style={{
                     background: '#f9fafb',
                     borderRadius: '12px',
@@ -760,8 +760,8 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* DELAY PREDICTION */}
-                {(() => {
+                {/* DELAY PREDICTION - Only show when availability data exists */}
+                {hasAvailabilityData && (() => {
                   // Check if delay prediction data is available
                   if (!results.delayPrediction || !results.delayPrediction.data || results.delayPrediction.data.length === 0) {
                     // Show placeholder when API doesn't return data
@@ -854,8 +854,8 @@ export default function Home() {
                   );
                 })()}
 
-                {/* 7-DAY FARE TREND */}
-                {(() => {
+                {/* 7-DAY FARE TREND - Only show when availability data exists */}
+                {hasAvailabilityData && (() => {
                   if (!results.fareTrend || results.fareTrend.length === 0) {
                     // Show placeholder when fare trend is not available
                     return (
