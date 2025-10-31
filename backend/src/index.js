@@ -6,21 +6,23 @@ import AmadeusClient from './amadeus.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
+const HOST = '0.0.0.0';
 
-// CORS configuration for production and development
+// CORS configuration - allow all origins for external API access
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://flightcapacity.vercel.app',
-    /\.vercel\.app$/  // Allow all Vercel preview deployments
-  ],
-  credentials: true,
+  origin: '*',  // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
   optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight requests explicitly
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 
 // Log all requests for debugging
@@ -179,8 +181,10 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 FlightCapacity API running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 FlightCapacity API running on ${HOST}:${PORT}`);
   console.log(`📍 Environment: ${process.env.AMADEUS_ENV || 'test'}`);
+  console.log(`🌐 Server accessible externally on port ${PORT}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  console.log(`✅ CORS enabled for all origins`);
 });
