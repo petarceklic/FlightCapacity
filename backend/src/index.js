@@ -162,12 +162,12 @@ app.get('/api/flight-capacity', async (req, res) => {
     const duration = scheduleData.data?.[0]?.legs?.[0]?.scheduledLegDuration;
 
     // Fetch all enhanced data in parallel
+    // Note: Fare trend and delay prediction are disabled to optimize performance
+    // They can be re-enabled when using production API with better availability
     const [
       availabilityData,
       airlineInfo,
-      aircraftModel,
-      fareTrend,
-      delayPrediction
+      aircraftModel
     ] = await Promise.all([
       amadeus.getFlightAvailability({
         origin: origin.toUpperCase(),
@@ -187,32 +187,12 @@ app.get('/api/flight-capacity', async (req, res) => {
       }).catch(err => {
         console.warn('Aircraft model failed:', err.message);
         return null;
-      }) : Promise.resolve(null),
-      amadeus.getFareTrend({
-        origin: origin.toUpperCase(),
-        destination: destination.toUpperCase(),
-        departureDate: date,
-        carrierCode: carrier.toUpperCase()
-      }).catch(err => {
-        console.warn('Fare trend failed:', err.message);
-        return null;
-      }),
-      (departureTime && arrivalTime && aircraftCode && duration) ? amadeus.getDelayPrediction({
-        originLocationCode: origin.toUpperCase(),
-        destinationLocationCode: destination.toUpperCase(),
-        departureDate: date,
-        departureTime: new Date(departureTime).toTimeString().slice(0, 5),
-        arrivalDate: new Date(arrivalTime).toISOString().split('T')[0],
-        arrivalTime: new Date(arrivalTime).toTimeString().slice(0, 5),
-        aircraftCode: aircraftCode,
-        carrierCode: carrier.toUpperCase(),
-        flightNumber: number,
-        duration: duration
-      }).catch(err => {
-        console.warn('Delay prediction failed:', err.message);
-        return null;
       }) : Promise.resolve(null)
     ]);
+    
+    // Set fare trend and delay prediction to null for now (disabled for performance)
+    const fareTrend = null;
+    const delayPrediction = null;
 
     res.json({
       success: true,
