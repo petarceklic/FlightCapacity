@@ -250,7 +250,7 @@ class AmadeusClient {
         },
         body: JSON.stringify({
           data: {
-            type: 'flight-delay",
+            type: 'flight-delay',
             originLocationCode,
             destinationLocationCode,
             departureDate,
