@@ -300,7 +300,41 @@ export default function Home() {
             // Get airline and aircraft info from API response
             const airlineName = results.airline?.data?.[0]?.businessName || results.airline?.data?.[0]?.commonName || results.query.carrier;
             const airlineLogo = `https://content.airhex.com/content/logos/airlines_${results.query.carrier}_200_200_s.png`;
-            const aircraftName = results.aircraft?.data?.[0]?.name || aircraftType;
+            
+            // Aircraft name lookup - try API first, then fallback to static lookup
+            const aircraftLookup = {
+              '346': 'Airbus A340-600',
+              '343': 'Airbus A340-300',
+              '333': 'Airbus A330-300',
+              '332': 'Airbus A330-200',
+              '339': 'Airbus A330-900neo',
+              '359': 'Airbus A350-900',
+              '388': 'Airbus A380-800',
+              '320': 'Airbus A320',
+              '321': 'Airbus A321',
+              '319': 'Airbus A319',
+              '32N': 'Airbus A320neo',
+              '32Q': 'Airbus A321neo',
+              '77W': 'Boeing 777-300ER',
+              '772': 'Boeing 777-200ER',
+              '773': 'Boeing 777-300',
+              '789': 'Boeing 787-9',
+              '788': 'Boeing 787-8',
+              '781': 'Boeing 787-10',
+              '744': 'Boeing 747-400',
+              '74H': 'Boeing 747-8',
+              '764': 'Boeing 767-400',
+              '763': 'Boeing 767-300',
+              '73H': 'Boeing 737-800',
+              '7M8': 'Boeing 737 MAX 8',
+              '7M9': 'Boeing 737 MAX 9',
+              'E90': 'Embraer E190',
+              'E95': 'Embraer E195',
+              'E75': 'Embraer E175',
+              'CRK': 'Bombardier CRJ-1000'
+            };
+            
+            const aircraftName = results.aircraft?.data?.[0]?.name || aircraftLookup[aircraftType] || aircraftType;
             
             return (
               <div key={scheduleIndex} className="flight-card">

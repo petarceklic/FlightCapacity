@@ -154,12 +154,20 @@ app.get('/api/flight-capacity', async (req, res) => {
     
     const aircraftCode = scheduleData.data?.[0]?.legs?.[0]?.aircraftEquipment?.aircraftType;
 
+    // Extract flight times for delay prediction
+    const departure = scheduleData.data?.[0]?.flightPoints?.find(fp => fp.departure);
+    const arrival = scheduleData.data?.[0]?.flightPoints?.find(fp => fp.arrival);
+    const departureTime = departure?.departure?.timings?.[0]?.value;
+    const arrivalTime = arrival?.arrival?.timings?.[0]?.value;
+    const duration = scheduleData.data?.[0]?.legs?.[0]?.scheduledLegDuration;
+
     // Fetch all enhanced data in parallel
     const [
       availabilityData,
       airlineInfo,
       aircraftModel,
-      fareTrend
+      fareTrend,
+      delayPrediction
     ] = await Promise.all([
       amadeus.getFlightAvailability({
         origin: origin.toUpperCase(),
@@ -188,7 +196,22 @@ app.get('/api/flight-capacity', async (req, res) => {
       }).catch(err => {
         console.warn('Fare trend failed:', err.message);
         return null;
-      })
+      }),
+      (departureTime && arrivalTime && aircraftCode && duration) ? amadeus.getDelayPrediction({
+        originLocationCode: origin.toUpperCase(),
+        destinationLocationCode: destination.toUpperCase(),
+        departureDate: date,
+        departureTime: new Date(departureTime).toTimeString().slice(0, 5),
+        arrivalDate: new Date(arrivalTime).toISOString().split('T')[0],
+        arrivalTime: new Date(arrivalTime).toTimeString().slice(0, 5),
+        aircraftCode: aircraftCode,
+        carrierCode: carrier.toUpperCase(),
+        flightNumber: number,
+        duration: duration
+      }).catch(err => {
+        console.warn('Delay prediction failed:', err.message);
+        return null;
+      }) : Promise.resolve(null)
     ]);
 
     res.json({
@@ -204,7 +227,8 @@ app.get('/api/flight-capacity', async (req, res) => {
       availability: availabilityData,
       airline: airlineInfo,
       aircraft: aircraftModel,
-      fareTrend: fareTrend
+      fareTrend: fareTrend,
+      delayPrediction: delayPrediction
     });
 
   } catch (error) {

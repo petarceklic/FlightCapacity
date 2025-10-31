@@ -239,7 +239,20 @@ class AmadeusClient {
   async getDelayPrediction({ originLocationCode, destinationLocationCode, departureDate, departureTime, arrivalDate, arrivalTime, aircraftCode, carrierCode, flightNumber, duration }) {
     const token = await this.getAccessToken();
     
-    const url = `${this.baseUrl}/v1/travel/predictions/flight-delay`;
+    const params = new URLSearchParams({
+      originLocationCode,
+      destinationLocationCode,
+      departureDate,
+      departureTime,
+      arrivalDate,
+      arrivalTime,
+      aircraftCode,
+      carrierCode,
+      flightNumber,
+      duration
+    });
+    
+    const url = `${this.baseUrl}/v1/travel/predictions/flight-delay?${params}`;
 
     try {
       const response = await fetch(url, {
@@ -247,22 +260,7 @@ class AmadeusClient {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          data: {
-            type: 'flight-delay',
-            originLocationCode,
-            destinationLocationCode,
-            departureDate,
-            departureTime,
-            arrivalDate,
-            arrivalTime,
-            aircraftCode,
-            carrierCode,
-            flightNumber,
-            duration
-          }
-        })
+        }
       });
 
       if (!response.ok) {
@@ -292,7 +290,7 @@ class AmadeusClient {
       dates.push(date.toISOString().split('T')[0]);
     }
     
-    // Fetch prices for each date
+    // Fetch prices for each date with timeout
     const pricePromises = dates.map(async (date) => {
       const params = new URLSearchParams({
         originLocationCode: origin,
@@ -306,13 +304,20 @@ class AmadeusClient {
       const url = `${this.baseUrl}/v2/shopping/flight-offers?${params}`;
 
       try {
+        // Add 5 second timeout per request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
-          }
+          },
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           return { date, price: null };
@@ -331,12 +336,19 @@ class AmadeusClient {
         const cheapestPrice = offers.length > 0 ? parseFloat(offers[0].price?.total || 0) : null;
         return { date, price: cheapestPrice };
       } catch (error) {
+        console.warn(`Fare trend for ${date} failed:`, error.message);
         return { date, price: null };
       }
     });
 
-    const results = await Promise.all(pricePromises);
-    return results;
+    try {
+      const results = await Promise.all(pricePromises);
+      console.log(`Fare trend retrieved: ${results.filter(r => r.price !== null).length}/7 dates`);
+      return results;
+    } catch (error) {
+      console.error('Fare trend failed:', error.message);
+      return dates.map(date => ({ date, price: null }));
+    }
   }
 
   // Get flight status by carrier code, flight number, and date
