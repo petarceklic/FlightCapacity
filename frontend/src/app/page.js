@@ -83,6 +83,75 @@ const seatReference = {
     "Airbus A321neo": { economyLegroom: "29 in" },
     "Airbus A330-300": { economyLegroom: "32 in" },
   },
+  "Ryanair": {
+    "Boeing 737-800": { economyLegroom: "30 in" },
+    "Boeing 737 MAX 8": { economyLegroom: "30 in" },
+  },
+  "EasyJet": {
+    "Airbus A319": { economyLegroom: "29 in" },
+    "Airbus A320": { economyLegroom: "29 in" },
+    "Airbus A320neo": { economyLegroom: "29 in" },
+    "Airbus A321": { economyLegroom: "29 in" },
+    "Airbus A321neo": { economyLegroom: "29 in" },
+  },
+  "Southwest Airlines": {
+    "Boeing 737-700": { economyLegroom: "32–33 in" },
+    "Boeing 737-800": { economyLegroom: "32–33 in" },
+    "Boeing 737 MAX 8": { economyLegroom: "32–33 in" },
+  },
+  "JetBlue Airways": {
+    "Airbus A220-300": { economyLegroom: "32–33 in" },
+    "Airbus A320": { economyLegroom: "32–33 in" },
+    "Airbus A321": { economyLegroom: "32–33 in" },
+    "Airbus A321neo": { economyLegroom: "32–33 in" },
+  },
+  "Spirit Airlines": {
+    "Airbus A319": { economyLegroom: "28 in" },
+    "Airbus A320": { economyLegroom: "28 in" },
+    "Airbus A321": { economyLegroom: "28 in" },
+  },
+  "Frontier Airlines": {
+    "Airbus A320": { economyLegroom: "28–31 in" },
+    "Airbus A320neo": { economyLegroom: "28–31 in" },
+    "Airbus A321": { economyLegroom: "28–31 in" },
+  },
+  "Norwegian Air Shuttle": {
+    "Boeing 737-800": { economyLegroom: "30 in" },
+    "Boeing 737 MAX 8": { economyLegroom: "30 in" },
+    "Boeing 787-9": { economyLegroom: "31–32 in" },
+  },
+  "Wizz Air": {
+    "Airbus A320": { economyLegroom: "30 in" },
+    "Airbus A321": { economyLegroom: "30 in" },
+    "Airbus A321neo": { economyLegroom: "30 in" },
+  },
+  "Scoot": {
+    "Airbus A320": { economyLegroom: "29 in" },
+    "Airbus A321neo": { economyLegroom: "29 in" },
+    "Boeing 787-8": { economyLegroom: "31–32 in" },
+    "Boeing 787-9": { economyLegroom: "31–32 in" },
+  },
+  "IndiGo": {
+    "Airbus A320": { economyLegroom: "30 in" },
+    "Airbus A320neo": { economyLegroom: "30 in" },
+    "Airbus A321": { economyLegroom: "30 in" },
+    "Airbus A321neo": { economyLegroom: "30 in" },
+    "ATR 72-600": { economyLegroom: "30 in" },
+  },
+  "Cebu Pacific": {
+    "Airbus A320": { economyLegroom: "29 in" },
+    "Airbus A321": { economyLegroom: "29 in" },
+    "Airbus A330-300": { economyLegroom: "31 in" },
+  },
+  "Allegiant Air": {
+    "Airbus A319": { economyLegroom: "28–30 in" },
+    "Airbus A320": { economyLegroom: "28–30 in" },
+  },
+  "Volaris": {
+    "Airbus A319": { economyLegroom: "28 in" },
+    "Airbus A320": { economyLegroom: "28 in" },
+    "Airbus A321": { economyLegroom: "28 in" },
+  },
 };
 
 // Helper function to get economy legroom
