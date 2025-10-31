@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -10,6 +10,12 @@ export default function Home() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Verify environment variable is loaded
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    console.log('✅ Connected to:', apiUrl);
+  }, []);
 
   const handleFlightCodeChange = (e) => {
     const value = e.target.value.toUpperCase();
@@ -51,17 +57,58 @@ export default function Home() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const url = `${apiUrl}/api/flight-status?carrier=${carrier}&number=${number}&date=${formData.date}`;
 
-      const response = await fetch(url);
+      console.log('🔍 Fetching from:', url);
+      console.log('📡 API Base URL:', apiUrl);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📥 Response status:', response.status, response.statusText);
+
+      // Handle non-JSON responses (network errors, CORS issues)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(
+          `Server returned ${response.status} ${response.statusText}. ` +
+          `Expected JSON but got ${contentType || 'unknown content type'}. ` +
+          `This might be a CORS or network issue.`
+        );
+      }
+
       const data = await response.json();
+      console.log('📦 Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Failed to fetch flight status');
+        throw new Error(
+          data.error || 
+          data.message || 
+          `HTTP ${response.status}: Failed to fetch flight status`
+        );
       }
 
       setResults(data);
     } catch (err) {
-      setError(err.message);
-      console.error('Error fetching flight status:', err);
+      // Enhanced error logging
+      console.error('❌ Error details:', {
+        message: err.message,
+        name: err.name,
+        stack: err.stack
+      });
+
+      // User-friendly error messages
+      let userMessage = err.message;
+      
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        userMessage = 'Cannot connect to backend API. Please check if the backend is running and NEXT_PUBLIC_API_URL is set correctly.';
+      } else if (err.message.includes('CORS')) {
+        userMessage = 'CORS error: Backend is blocking requests from this domain. Check CORS configuration.';
+      }
+
+      setError(userMessage);
     } finally {
       setLoading(false);
     }
