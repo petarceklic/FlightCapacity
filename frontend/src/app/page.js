@@ -468,6 +468,74 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* DELAY PREDICTION */}
+                {results.delayPrediction && results.delayPrediction.data && results.delayPrediction.data.length > 0 && (() => {
+                  const prediction = results.delayPrediction.data[0];
+                  const delayProbability = prediction.probability || 0;
+                  const delayPercentage = (delayProbability * 100).toFixed(0);
+                  
+                  const getRiskLevel = (prob) => {
+                    if (prob >= 0.5) return { level: 'High Risk', color: '#dc2626' };
+                    if (prob >= 0.3) return { level: 'Medium Risk', color: '#f59e0b' };
+                    return { level: 'Low Risk', color: '#10b981' };
+                  };
+                  
+                  const risk = getRiskLevel(delayProbability);
+                  
+                  return (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', fontWeight: '600' }}>On-Time Performance</h3>
+                      <div style={{
+                        padding: '1.25rem',
+                        background: '#ffffff',
+                        borderRadius: '10px',
+                        border: '2px solid #e5e7eb',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1.5rem'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                            Likelihood of Delay
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: risk.color }}>
+                              {delayPercentage}%
+                            </div>
+                            <div style={{ fontSize: '1rem', color: risk.color, fontWeight: '600' }}>
+                              {risk.level}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          width: '80px',
+                          height: '80px',
+                          borderRadius: '50%',
+                          background: `conic-gradient(${risk.color} ${delayPercentage}%, #e5e7eb ${delayPercentage}%)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative'
+                        }}>
+                          <div style={{
+                            width: '60px',
+                            height: '60px',
+                            borderRadius: '50%',
+                            background: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.25rem'
+                          }}>
+                            ⏱️
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* 7-DAY FARE TREND */}
                 {results.fareTrend && results.fareTrend.length > 0 && (() => {
                   const fareTrendData = results.fareTrend;
