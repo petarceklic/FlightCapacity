@@ -107,6 +107,11 @@ export default function Home() {
         );
       }
 
+      // Debug logging for new features
+      console.log('🔍 Delay Prediction:', data.delayPrediction ? 'Available' : 'Not available');
+      console.log('🔍 Fare Trend:', data.fareTrend ? `${data.fareTrend.length} days` : 'Not available');
+      console.log('🔍 Aircraft Model:', data.aircraft ? 'Available' : 'Not available');
+      
       setResults(data);
     } catch (err) {
       // Enhanced error logging
@@ -351,7 +356,7 @@ export default function Home() {
                     <p className="airline-name" style={{ margin: '0.25rem 0 0 0', color: '#6b7280' }}>
                       {airlineName} • {results.query.route}
                     </p>
-                    {aircraftName && aircraftName !== aircraftType && (
+                    {aircraftName && (
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#9ca3af' }}>
                         ✈️ {aircraftName}
                       </p>
