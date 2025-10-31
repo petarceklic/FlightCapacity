@@ -65,8 +65,13 @@ export default function Home() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const url = `${apiUrl}/api/flight-status?carrier=${carrier}&number=${number}&date=${formData.date}`;
 
-      console.log('🔍 Fetching from:', url);
+      console.log('\n=== API REQUEST DEBUG ===');
+      console.log('🔍 Full URL:', url);
       console.log('📡 API Base URL:', apiUrl);
+      console.log('📝 Environment Variable:', process.env.NEXT_PUBLIC_API_URL ? 'SET' : 'NOT SET (using fallback)');
+      console.log('✈️ Flight:', `${carrier}${number}`);
+      console.log('📅 Date:', formData.date);
+      console.log('========================\n');
 
       const response = await fetch(url, {
         method: 'GET',
@@ -75,7 +80,10 @@ export default function Home() {
         },
       });
 
-      console.log('📥 Response status:', response.status, response.statusText);
+      console.log('\n=== API RESPONSE DEBUG ===');
+      console.log('📥 Status:', response.status, response.statusText);
+      console.log('🔗 Response URL:', response.url);
+      console.log('✅ Response OK:', response.ok);
 
       // Handle non-JSON responses (network errors, CORS issues)
       const contentType = response.headers.get('content-type');
@@ -88,7 +96,8 @@ export default function Home() {
       }
 
       const data = await response.json();
-      console.log('📦 Response data:', data);
+      console.log('📦 Response data:', JSON.stringify(data, null, 2));
+      console.log('=========================\n');
 
       if (!response.ok) {
         throw new Error(
@@ -101,19 +110,25 @@ export default function Home() {
       setResults(data);
     } catch (err) {
       // Enhanced error logging
-      console.error('❌ Error details:', {
-        message: err.message,
-        name: err.name,
-        stack: err.stack
-      });
+      console.error('\n=== ERROR DEBUG ===');
+      console.error('❌ Error Type:', err.name);
+      console.error('❌ Error Message:', err.message);
+      console.error('📡 Attempted URL:', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/flight-status`);
+      console.error('🔍 Full Error Object:', err);
+      if (err.stack) {
+        console.error('📄 Stack Trace:', err.stack);
+      }
+      console.error('==================\n');
 
       // User-friendly error messages
       let userMessage = err.message;
       
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        userMessage = 'Cannot connect to backend API. Please check if the backend is running and NEXT_PUBLIC_API_URL is set correctly.';
+        userMessage = `Network Error: Cannot connect to backend at ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}. The backend may be down or unreachable.`;
       } else if (err.message.includes('CORS')) {
-        userMessage = 'CORS error: Backend is blocking requests from this domain. Check CORS configuration.';
+        userMessage = `CORS Error: Backend at ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'} is blocking requests from this domain. Check CORS configuration.`;
+      } else if (err.name === 'TypeError') {
+        userMessage = `Connection Failed: Unable to reach ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}. Check if the backend is running.`;
       }
 
       setError(userMessage);
