@@ -62,20 +62,14 @@ export default function Home() {
       // Parse flight code
       const { carrier, number } = parseFlightCode(formData.flightCode);
 
-      // Validate origin and destination
-      if (!formData.origin || !formData.destination) {
-        throw new Error('Please enter both origin and destination airports');
-      }
-
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/api/flight-capacity?carrier=${carrier}&number=${number}&date=${formData.date}&origin=${formData.origin}&destination=${formData.destination}`;
+      const url = `${apiUrl}/api/flight-capacity?carrier=${carrier}&number=${number}&date=${formData.date}`;
 
       console.log('\n=== API REQUEST DEBUG ===');
       console.log('🔍 Full URL:', url);
       console.log('📡 API Base URL:', apiUrl);
       console.log('📝 Environment Variable:', process.env.NEXT_PUBLIC_API_URL ? 'SET' : 'NOT SET (using fallback)');
       console.log('✈️ Flight:', `${carrier}${number}`);
-      console.log('📍 Route:', `${formData.origin} → ${formData.destination}`);
       console.log('📅 Date:', formData.date);
       console.log('========================\n');
 

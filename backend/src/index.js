@@ -100,15 +100,47 @@ app.get('/api/flights', async (req, res) => {
 // Flight capacity endpoint - shows availability and seats
 app.get('/api/flight-capacity', async (req, res) => {
   try {
-    const { carrier, number, date, origin, destination } = req.query;
+    let { carrier, number, date, origin, destination } = req.query;
 
     // Validate required parameters
-    if (!carrier || !number || !date || !origin || !destination) {
+    if (!carrier || !number || !date) {
       return res.status(400).json({
         error: 'Missing required parameters',
-        required: ['carrier', 'number', 'date', 'origin', 'destination'],
-        example: '/api/flight-capacity?carrier=LH&number=400&date=2025-11-10&origin=FRA&destination=JFK'
+        required: ['carrier', 'number', 'date'],
+        example: '/api/flight-capacity?carrier=LH&number=400&date=2025-11-10'
       });
+    }
+
+    // If origin/destination not provided, get schedule first to extract them
+    if (!origin || !destination) {
+      console.log(`Getting schedule to extract route for ${carrier}${number} on ${date}`);
+      
+      const scheduleData = await amadeus.getFlightStatus({
+        carrierCode: carrier.toUpperCase(),
+        flightNumber: number,
+        scheduledDepartureDate: date
+      });
+      
+      const flightPoints = scheduleData.data?.[0]?.flightPoints;
+      if (!flightPoints || flightPoints.length < 2) {
+        return res.status(404).json({
+          success: false,
+          error: 'Could not determine flight route',
+          message: 'Flight schedule does not contain route information'
+        });
+      }
+      
+      origin = flightPoints[0]?.iataCode;
+      destination = flightPoints[flightPoints.length - 1]?.iataCode;
+      
+      if (!origin || !destination) {
+        return res.status(404).json({
+          success: false,
+          error: 'Could not extract route from flight data'
+        });
+      }
+      
+      console.log(`Route extracted: ${origin} → ${destination}`);
     }
 
     console.log(`Getting flight capacity: ${carrier}${number} from ${origin} to ${destination} on ${date}`);
