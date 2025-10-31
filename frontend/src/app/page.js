@@ -13,6 +13,8 @@ const getDefaultDate = () => {
 export default function Home() {
   const [formData, setFormData] = useState({
     flightCode: '',
+    origin: '',
+    destination: '',
     date: getDefaultDate(),
   });
   const [results, setResults] = useState(null);
@@ -40,6 +42,22 @@ export default function Home() {
     }));
   };
 
+  const handleOriginChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    setFormData(prev => ({
+      ...prev,
+      origin: value
+    }));
+  };
+
+  const handleDestinationChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    setFormData(prev => ({
+      ...prev,
+      destination: value
+    }));
+  };
+
   const parseFlightCode = (code) => {
     // Match pattern: 2 letters followed by 1-4 digits
     const match = code.match(/^([A-Z]{2})(\d{1,4})$/);
@@ -62,14 +80,20 @@ export default function Home() {
       // Parse flight code
       const { carrier, number } = parseFlightCode(formData.flightCode);
 
+      // Validate origin and destination
+      if (!formData.origin || !formData.destination) {
+        throw new Error('Please enter both origin and destination airports');
+      }
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/api/flight-status?carrier=${carrier}&number=${number}&date=${formData.date}`;
+      const url = `${apiUrl}/api/flight-capacity?carrier=${carrier}&number=${number}&date=${formData.date}&origin=${formData.origin}&destination=${formData.destination}`;
 
       console.log('\n=== API REQUEST DEBUG ===');
       console.log('🔍 Full URL:', url);
       console.log('📡 API Base URL:', apiUrl);
       console.log('📝 Environment Variable:', process.env.NEXT_PUBLIC_API_URL ? 'SET' : 'NOT SET (using fallback)');
       console.log('✈️ Flight:', `${carrier}${number}`);
+      console.log('📍 Route:', `${formData.origin} → ${formData.destination}`);
       console.log('📅 Date:', formData.date);
       console.log('========================\n');
 
@@ -178,14 +202,52 @@ export default function Home() {
               name="flightCode"
               value={formData.flightCode}
               onChange={handleFlightCodeChange}
-              placeholder="MH124"
+              placeholder="LH400"
               pattern="[A-Z]{2}\d{1,4}"
-              title="Enter 2 letters followed by 1-4 digits (e.g., MH124)"
+              title="Enter 2 letters followed by 1-4 digits (e.g., LH400)"
               maxLength="6"
               required
             />
             <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              Format: XX123 (e.g., MH124, QF7)
+              Format: XX123 (e.g., LH400, BA1)
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="origin">Origin</label>
+            <input
+              type="text"
+              id="origin"
+              name="origin"
+              value={formData.origin}
+              onChange={handleOriginChange}
+              placeholder="FRA"
+              pattern="[A-Z]{3}"
+              title="Enter 3-letter airport code (e.g., FRA)"
+              maxLength="3"
+              required
+            />
+            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              Airport code (e.g., FRA, JFK)
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="destination">Destination</label>
+            <input
+              type="text"
+              id="destination"
+              name="destination"
+              value={formData.destination}
+              onChange={handleDestinationChange}
+              placeholder="JFK"
+              pattern="[A-Z]{3}"
+              title="Enter 3-letter airport code (e.g., JFK)"
+              maxLength="3"
+              required
+            />
+            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              Airport code (e.g., JFK, LHR)
             </small>
           </div>
 
@@ -214,7 +276,7 @@ export default function Home() {
 
       {loading && (
         <div className="loading-message">
-          🔍 Fetching flight status...
+          🔍 Fetching flight capacity data...
         </div>
       )}
 
@@ -224,33 +286,152 @@ export default function Home() {
         </div>
       )}
 
-      {results && !loading && results.data?.data && results.data.data.length > 0 && (
+      {results && !loading && results.schedule?.data && results.schedule.data.length > 0 && (
         <div className="results-section">
-          {results.data.data.map((flight, index) => {
+          {results.schedule.data.map((flight, scheduleIndex) => {
             const departure = flight.flightPoints?.find(fp => fp.departure);
             const arrival = flight.flightPoints?.find(fp => fp.arrival);
+            const aircraftType = flight.legs?.[0]?.aircraftEquipment?.aircraftType;
+            
+            // Calculate capacity metrics from availability data
+            const availabilityOffers = results.availability?.data || [];
+            
+            // Group by cabin class
+            const cabinData = {};
+            let totalSeatsAvailable = 0;
+            
+            availabilityOffers.forEach(offer => {
+              const seats = offer.numberOfBookableSeats || 0;
+              totalSeatsAvailable += seats;
+              
+              offer.travelerPricings?.forEach(pricing => {
+                pricing.fareDetailsBySegment?.forEach(segment => {
+                  const cabin = segment.cabin || 'UNKNOWN';
+                  if (!cabinData[cabin]) {
+                    cabinData[cabin] = {
+                      seats: 0,
+                      minPrice: Infinity,
+                      offers: 0
+                    };
+                  }
+                  cabinData[cabin].seats += seats;
+                  cabinData[cabin].offers += 1;
+                  const price = parseFloat(offer.price?.total || 0);
+                  if (price < cabinData[cabin].minPrice) {
+                    cabinData[cabin].minPrice = price;
+                  }
+                });
+              });
+            });
+            
+            // Estimate total capacity (rough estimate based on aircraft type)
+            const aircraftCapacity = {
+              '346': 340,  // A340-600
+              '333': 300,  // A330-300
+              '332': 250,  // A330-200
+              '77W': 350,  // 777-300ER
+              '772': 300,  // 777-200ER
+              '789': 290,  // 787-9
+              '788': 240,  // 787-8
+            };
+            
+            const estimatedCapacity = aircraftCapacity[aircraftType] || 300;
+            const capacityPercentage = totalSeatsAvailable > 0 
+              ? Math.max(0, Math.min(100, ((estimatedCapacity - totalSeatsAvailable) / estimatedCapacity * 100)))
+              : 0;
+            
+            const getCapacityColor = (pct) => {
+              if (pct >= 90) return '#dc2626'; // Red - nearly full
+              if (pct >= 70) return '#f59e0b'; // Orange - filling up
+              if (pct >= 40) return '#10b981'; // Green - good availability
+              return '#3b82f6'; // Blue - lots of space
+            };
             
             return (
-              <div key={index} className="flight-card">
+              <div key={scheduleIndex} className="flight-card">
                 <div className="flight-card-header">
                   <div>
                     <h2>{results.query.flightCode}</h2>
                     <p className="airline-name">
-                      {flight.carrierCode || results.query.carrier} Flight
+                      {results.query.route}
                     </p>
                   </div>
-                  {flight.flightStatus && (
-                    <div className="status-badge">
-                      {flight.flightStatus}
-                    </div>
-                  )}
                 </div>
 
+                {/* CAPACITY OVERVIEW */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  padding: '2rem',
+                  borderRadius: '12px',
+                  color: 'white',
+                  marginBottom: '1.5rem',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    {capacityPercentage.toFixed(0)}%
+                  </div>
+                  <div style={{ fontSize: '1.25rem', opacity: 0.9 }}>
+                    Flight Capacity
+                  </div>
+                  <div style={{ fontSize: '0.95rem', opacity: 0.8, marginTop: '0.5rem' }}>
+                    {totalSeatsAvailable} seats available
+                  </div>
+                  
+                  {/* Visual capacity bar */}
+                  <div style={{
+                    width: '100%',
+                    height: '12px',
+                    background: 'rgba(255,255,255,0.2)',
+                    borderRadius: '6px',
+                    marginTop: '1rem',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      width: `${capacityPercentage}%`,
+                      height: '100%',
+                      background: getCapacityColor(capacityPercentage),
+                      transition: 'width 0.5s ease'
+                    }} />
+                  </div>
+                </div>
+
+                {/* CLASS BREAKDOWN */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Cabin Class Breakdown</h3>
+                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    {Object.entries(cabinData).map(([cabin, data]) => (
+                      <div key={cabin} style={{
+                        padding: '1rem',
+                        background: '#f9fafb',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: '600', color: '#111827' }}>{cabin}</div>
+                          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                            from ${data.minPrice.toFixed(2)}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2563eb' }}>
+                            {data.seats}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>seats</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FLIGHT ROUTE */}
                 <div className="flight-route">
                   <div className="route-point">
                     <div className="airport-code">{departure?.iataCode || 'N/A'}</div>
                     <div className="time-info">
-                      <div className="time-label">Scheduled</div>
+                      <div className="time-label">Departure</div>
                       <div className="time-value">{formatTime(departure?.departure?.timings?.[0]?.value)}</div>
                       {departure?.departure?.timings?.[0]?.value && (
                         <div className="date-value">{formatDate(departure.departure.timings[0].value)}</div>
@@ -266,7 +447,7 @@ export default function Home() {
                   <div className="route-point">
                     <div className="airport-code">{arrival?.iataCode || 'N/A'}</div>
                     <div className="time-info">
-                      <div className="time-label">Scheduled</div>
+                      <div className="time-label">Arrival</div>
                       <div className="time-value">{formatTime(arrival?.arrival?.timings?.[0]?.value)}</div>
                       {arrival?.arrival?.timings?.[0]?.value && (
                         <div className="date-value">{formatDate(arrival.arrival.timings[0].value)}</div>
@@ -275,17 +456,24 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* FLIGHT DETAILS */}
                 <div className="flight-details">
-                  {flight.legs?.[0]?.aircraftEquipment?.aircraftType && (
+                  {aircraftType && (
                     <div className="detail-item">
                       <span className="detail-label">Aircraft:</span>
-                      <span className="detail-value">{flight.legs[0].aircraftEquipment.aircraftType}</span>
+                      <span className="detail-value">{aircraftType}</span>
                     </div>
                   )}
-                  {flight.legs?.[0]?.scheduledDuration && (
+                  {flight.legs?.[0]?.scheduledLegDuration && (
                     <div className="detail-item">
                       <span className="detail-label">Duration:</span>
-                      <span className="detail-value">{flight.legs[0].scheduledDuration}</span>
+                      <span className="detail-value">{flight.legs[0].scheduledLegDuration}</span>
+                    </div>
+                  )}
+                  {estimatedCapacity && (
+                    <div className="detail-item">
+                      <span className="detail-label">Est. Capacity:</span>
+                      <span className="detail-value">{estimatedCapacity} seats</span>
                     </div>
                   )}
                 </div>
@@ -295,7 +483,7 @@ export default function Home() {
         </div>
       )}
 
-      {results && !loading && (!results.data?.data || results.data.data.length === 0) && (
+      {results && !loading && (!results.schedule?.data || results.schedule.data.length === 0) && (
         <div className="no-results">
           No flight information found for {results.query.flightCode} on {results.query.date}
         </div>
