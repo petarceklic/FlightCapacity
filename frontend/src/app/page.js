@@ -2,6 +2,85 @@
 
 import { useState, useEffect } from 'react';
 
+// Static seat reference data for economy legroom by airline and aircraft model
+// Based on SeatGuru-style reference data
+// Note: This dataset can be expanded to include Business and Premium Economy legroom if desired
+const seatReference = {
+  "Lufthansa": {
+    "Airbus A340-600": { economyLegroom: "31–33 in" },
+    "Airbus A350-900": { economyLegroom: "31 in" },
+    "Airbus A380-800": { economyLegroom: "31 in" },
+    "Boeing 747-400": { economyLegroom: "31 in" },
+    "Boeing 747-8": { economyLegroom: "31 in" },
+    "Airbus A320": { economyLegroom: "30 in" },
+    "Airbus A321": { economyLegroom: "30 in" },
+  },
+  "Singapore Airlines": {
+    "Airbus A350-900": { economyLegroom: "32–33 in" },
+    "Boeing 787-10": { economyLegroom: "32 in" },
+    "Airbus A380-800": { economyLegroom: "32 in" },
+    "Boeing 777-300ER": { economyLegroom: "32 in" },
+  },
+  "Qantas": {
+    "Boeing 787-9": { economyLegroom: "32 in" },
+    "Airbus A380-800": { economyLegroom: "31 in" },
+    "Boeing 737-800": { economyLegroom: "30–31 in" },
+    "Airbus A330-300": { economyLegroom: "31 in" },
+  },
+  "Emirates": {
+    "Airbus A380-800": { economyLegroom: "32–34 in" },
+    "Boeing 777-300ER": { economyLegroom: "32–34 in" },
+    "Boeing 777-200ER": { economyLegroom: "32 in" },
+  },
+  "American Airlines": {
+    "Boeing 787-9": { economyLegroom: "31–32 in" },
+    "Boeing 777-300ER": { economyLegroom: "31–32 in" },
+    "Airbus A321": { economyLegroom: "30–31 in" },
+    "Boeing 737-800": { economyLegroom: "30–31 in" },
+    "Boeing 737 MAX 8": { economyLegroom: "30–31 in" },
+  },
+  "Delta Air Lines": {
+    "Airbus A350-900": { economyLegroom: "31–32 in" },
+    "Boeing 767-400": { economyLegroom: "31–32 in" },
+    "Airbus A330-300": { economyLegroom: "31–32 in" },
+    "Boeing 737-800": { economyLegroom: "30–31 in" },
+  },
+  "United Airlines": {
+    "Boeing 787-10": { economyLegroom: "31 in" },
+    "Boeing 787-9": { economyLegroom: "31 in" },
+    "Boeing 777-300ER": { economyLegroom: "31 in" },
+    "Boeing 737 MAX 9": { economyLegroom: "30–31 in" },
+    "Airbus A320": { economyLegroom: "30 in" },
+  },
+  "British Airways": {
+    "Airbus A350-900": { economyLegroom: "31 in" },
+    "Boeing 787-9": { economyLegroom: "31 in" },
+    "Boeing 777-300ER": { economyLegroom: "31 in" },
+    "Airbus A380-800": { economyLegroom: "31 in" },
+  },
+  "Air France": {
+    "Airbus A350-900": { economyLegroom: "31–32 in" },
+    "Boeing 787-9": { economyLegroom: "31 in" },
+    "Boeing 777-300ER": { economyLegroom: "31 in" },
+    "Airbus A380-800": { economyLegroom: "31 in" },
+  },
+  "Japan Airlines": {
+    "Boeing 787-9": { economyLegroom: "33–34 in" },
+    "Boeing 777-300ER": { economyLegroom: "33–34 in" },
+    "Airbus A350-900": { economyLegroom: "33–34 in" },
+  },
+};
+
+// Helper function to get economy legroom
+const getEconomyLegroom = (airlineName, aircraftModel) => {
+  if (!airlineName || !aircraftModel) return null;
+  const airline = seatReference[airlineName];
+  if (!airline) return null;
+  const aircraft = airline[aircraftModel];
+  if (!aircraft) return null;
+  return aircraft.economyLegroom;
+};
+
 // Helper function to get default date (10 days from today)
 const getDefaultDate = () => {
   const today = new Date();
